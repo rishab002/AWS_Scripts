@@ -1,0 +1,38 @@
+#WINDOWS PowerShell Script to copy objects from one S3 bucket to Another
+
+# Your account access key - must have read access to your S3 Bucket
+$accessKey = "ACCESS_KEY"
+# Your account secret access key
+$secretKey = "YOUR_SECRET_KEY"
+# Your role's session token | COMMENT OUT SESSION TOKEN IF YOU ARE USING AN IAM USER.
+$sessionToken = "YOUR_SESSION'S_TOKEN"
+# The region associated with your bucket e.g. eu-west-1, us-east-1 etc. (see http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-regions-availability-zones.html#concepts-regions)
+$region = "us-east-1"
+
+[Environment]::SetEnvironmentVariable("AWS_ACCESS_KEY_ID",$accessKey)
+[Environment]::SetEnvironmentVariable("AWS_SECRET_ACCESS_KEY",$secretKey)
+[Environment]::SetEnvironmentVariable("AWS_SESSION_TOKEN",$sessionToken)
+[Environment]::SetEnvironmentVariable("AWS_DEFAULT_REGION",$region)
+
+
+$sourceBucket = "$$$$$Ï"
+$destinationBucket = "$$$$$$$$$"
+
+    #All the Obejcts Present in the S3 bucket that are Shown Under Hide Tab , Delete Marker Objects will not be copied 
+    $ObjectPresent  =  (Get-S3Object -BucketName $sourceBucket).Key
+
+     foreach($i in $ObjectPresent) { 
+        #For each Object Get all the previous versions and Current version.
+        $GetAllVersions = (Get-S3Version -BucketName 'spotinsti' -Prefix $i).Versions.VersionId
+
+        #Reverse the GetAllVersion array. Objects will be Put in reverse order i.e Previous objects first and then Current version
+        [array]::Reverse($GetAllVersions)
+        foreach($j in $GetAllVersions){
+        Copy-S3Object -BucketName $sourceBucket `
+                      -DestinationBucket $destinationBucket `
+                      -Key $i `
+                      -DestinationKey $i `
+                      -VersionId $j `
+                      -CannedACLName bucket-owner-full-control
+                    }
+    }
